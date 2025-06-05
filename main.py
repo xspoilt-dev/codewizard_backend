@@ -1,6 +1,7 @@
 from catzilla import App, JSONResponse, Response, RouterGroup
-from database import login_user, get_user
+from database import login_user, get_user, register_user
 from utility import Utility
+
 
 class WebBackend:
     def __init__(self):
@@ -26,6 +27,42 @@ class WebBackend:
                     "admin": "Welcome to the admin panel"
                 }
             )
+
+    def regiser(self, request):
+        data = request.json()
+        username= data.get('email')
+        password = data.get('password')
+        name = data.get('name')
+        if not Utility.is_valid_email(username):
+            return JSONResponse(
+                status_code=400,
+                data={"error": "Invalid email format"}
+            )
+        if not username or not password or not name:
+            return JSONResponse(
+                status_code=400,
+                data={"error": "Username, password, and name are required"}
+            )
+        if get_user(username):
+            return JSONResponse(
+                status_code=409,
+                data={"error": "User already exists"}
+            )
+        token  = Utility.gen_token(username, password)
+        user = register_user(username, password, name, token)
+        if not user:
+            return JSONResponse(
+                status_code=500,
+                data={"error": "Failed to register user"}
+            )
+        return JSONResponse(
+                data={
+                    "message": "User registered successfully",
+                    "email": username,
+                }
+            )
+
+        
     def login(self, request):
         data = request.json()
         username = data.get('email')

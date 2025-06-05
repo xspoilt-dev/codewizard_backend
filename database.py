@@ -169,10 +169,10 @@ db_manager = DatabaseManager()
 
 # ---------- USER OPERATIONS ----------
 
-async def register_user(email, password, name=""):
+async def register_user(email, password, name="", token=None):
     """Register a new user"""
-    query = "INSERT INTO users (email, password, name) VALUES (?, ?, ?)"
-    return await db_manager.execute_query(query, (email, password, name))
+    query = "INSERT INTO users (email, password, name, token) VALUES (?, ?, ?, ?)"
+    return await db_manager.execute_query(query, (email, password, name, token))
 
 async def login_user(email, password):
     """Get user token by email and password for login"""
@@ -198,18 +198,6 @@ async def get_user_by_token(token):
     query = "SELECT * FROM users WHERE token = ? AND token_expires_at > datetime('now')"
     return await db_manager.fetch_one(query, (token,))
 
-async def generate_user_token(user_id, expires_hours=24):
-    """Generate and save token for user"""
-    token = secrets.token_urlsafe(32)
-    expires_at = datetime.now() + timedelta(hours=expires_hours)
-    query = "UPDATE users SET token = ?, token_expires_at = ? WHERE id = ?"
-    await db_manager.execute_query(query, (token, expires_at.isoformat(), user_id))
-    return token
-
-async def revoke_user_token(user_id):
-    """Revoke user token"""
-    query = "UPDATE users SET token = NULL, token_expires_at = NULL WHERE id = ?"
-    return await db_manager.execute_query(query, (user_id,))
 
 async def update_user_profile(user_id, name=None, email=None):
     """Update user profile"""
