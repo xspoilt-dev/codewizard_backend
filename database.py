@@ -23,6 +23,7 @@ users = Table(
     Column("is_verified", Boolean, default=False),
     Column("created_at", DateTime, default=func.now())
 )
+
 # Lessons table
 lessons = Table(
     "lessons", metadata,
@@ -34,6 +35,7 @@ lessons = Table(
     Column("order_index", Integer),
     Column("created_at", DateTime, default=func.now())
 )
+
 # Quizzes table
 quizzes = Table(
     "quizzes", metadata,
@@ -176,28 +178,35 @@ async def register_user(email, password, name="", token=None):
 
 async def login_user(email, password):
     """Get user token by email and password for login"""
-    query = "SELECT token FROM users WHERE email = ?"
+    query = "SELECT password, token FROM users WHERE email = ?"
     row = await db_manager.fetch_one(query, (email,))
-    hached_pwd = row["password"] if row else None
-    if not row or not hached_pwd:
+    
+    if not row:
         return None
-    if Utility.pwd_match(password, hashed_password=hached_pwd):
+    
+    hashed_pwd = row["password"]
+    if not hashed_pwd:
+        return None
+    
+    if Utility.pwd_match(password, hashed_password=hashed_pwd):
         return row["token"]
     return None
 
 async def get_user(email):
-    """Get user by ID"""
-    query = "SELECT name FROM users WHERE email = ?"
+    """Check if user exists by email"""
+    query = "SELECT id FROM users WHERE email = ?"
     row = await db_manager.fetch_one(query, (email,))
-    if row:
-        return True
-    return False
+    return row is not None
 
 async def get_user_by_token(token):
     """Get user by token"""
-    query = "SELECT * FROM users WHERE token = ? AND token_expires_at > datetime('now')"
+    query = "SELECT * FROM users WHERE token = ?"
     return await db_manager.fetch_one(query, (token,))
 
+async def get_user_by_id(user_id):
+    """Get user by ID"""
+    query = "SELECT * FROM users WHERE id = ?"
+    return await db_manager.fetch_one(query, (user_id,))
 
 async def update_user_profile(user_id, name=None, email=None):
     """Update user profile"""
