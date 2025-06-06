@@ -18,8 +18,7 @@ async def init_db():
 
 async def register_user(email: str, password: str, name: str) -> str:
     async with AsyncSessionLocal() as session:
-        token = generate_token()
-        expire_at = datetime.now(timezone.utc) + timedelta(days=7)
+        token, expire_at = generate_token()
         hashed_password = hash_password(password)
         user = User(email=email, password=hashed_password, name=name, token=token, token_expires_at=expire_at)
         session.add(user)
@@ -41,8 +40,15 @@ async def login_user(email: str, password: str) -> str:
             
         if not verify_password(password, user.password):
             return "INVALID_PASSWORD"
+        
+        # Generate new token on login
+        token, expire_at = generate_token()
+        user.token = token
+        user.token_expires_at = expire_at
+        await session.commit()
+        await session.refresh(user)
             
-        return user.token
+        return token
 
 async def get_user(email):
     async with AsyncSessionLocal() as session:
@@ -52,7 +58,12 @@ async def get_user(email):
 
 async def get_user_by_token(token):
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User).where(User.token == token))
+        result = await session.execute(
+            select(User).where(
+                User.token == token,
+                User.token_expires_at > datetime.now(timezone.utc)
+            )
+        )
         return result.scalar_one_or_none()
 
 async def get_user_by_id(user_id):
