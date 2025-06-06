@@ -1,7 +1,7 @@
 import re
 import bcrypt
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from config import USER_TOKEN_LENGTH, USER_TOKEN_LIFETIME_HOURS
 
@@ -59,7 +59,8 @@ def is_valid_url(url: str) -> bool:
     return re.match(url_regex, url) is not None
 
 
-def generate_token() -> str:
-    """Generate User session token"""
+def generate_token() -> tuple[str, datetime]:
+    """Generate User session token and expiration time"""
     token = secrets.token_urlsafe(USER_TOKEN_LENGTH)
-    return token
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=USER_TOKEN_LIFETIME_HOURS)
+    return token, expires_at
