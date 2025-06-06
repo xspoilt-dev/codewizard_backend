@@ -388,7 +388,11 @@ async def delete_session(session_token):
 
 async def cleanup_expired_sessions():
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(UserSession).where(UserSession.expires_at < datetime.utcnow()))
+        result = await session.execute(
+            select(UserSession).where(
+                UserSession.expires_at < datetime.now(timezone.utc)
+            )
+        )
         sessions = result.scalars().all()
         for session_obj in sessions:
             await session.delete(session_obj)
