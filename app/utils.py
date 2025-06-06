@@ -6,8 +6,8 @@ from pathlib import Path
 from app.config import USER_TOKEN_LENGTH, USER_TOKEN_LIFETIME_HOURS
 
 def get_file_extension(filename: str) -> str:
-    """Returns the file extension of the given filename."""
-    return Path(filename).suffix[:1]
+    """Returns the file extension of the given filename without the dot."""
+    return Path(filename).suffix[1:]  # Remove the dot and return the full extension
 
 def is_valid_filename(filename: str) -> bool:
     """Checks if the filename is valid (not empty and does not contain invalid characters)."""
