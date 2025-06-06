@@ -16,7 +16,7 @@ from app.database import (
     # Code evaluation
     log_code_evaluation, get_user_code_evaluations
 )
-from . import utils
+from app import utils
 import json
 
 def auth_required(f):
