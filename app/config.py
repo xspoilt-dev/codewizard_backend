@@ -12,7 +12,7 @@ RELOAD = os.getenv('RELOAD', 'False').lower() == 'true'
 
 # Database Configuration
 DATABASE_FILE = os.getenv('DATABASE_FILE', 'hackathon.db')
-DATABASE_URL = f"sqlite:///./{DATABASE_FILE}"
+DATABASE_URL = os.getenv('DATABASE_URL', f"sqlite+aiosqlite:///./{DATABASE_FILE}")
 
 # Security Configuration
 USER_TOKEN_LENGTH = int(os.getenv('USER_TOKEN_LENGTH', '32'))
