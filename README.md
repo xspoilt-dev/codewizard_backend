@@ -22,7 +22,7 @@ CodeWizard is an innovative learning platform built for the [World's Largest Hac
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Python with FastAPI
+- **Backend**: Python with Catzilla 
 - **Database**: SQLite with SQLAlchemy
 - **AI Integration**: OpenAI API
 - **Authentication**: JWT-based secure authentication
