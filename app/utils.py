@@ -3,7 +3,7 @@ import bcrypt
 import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from config import USER_TOKEN_LENGTH, USER_TOKEN_LIFETIME_HOURS
+from app.config import USER_TOKEN_LENGTH, USER_TOKEN_LIFETIME_HOURS
 
 def get_file_extension(filename: str) -> str:
     """Returns the file extension of the given filename."""

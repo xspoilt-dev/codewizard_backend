@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 from app.models import Base, User, Lesson, Quiz, QuizSubmission, Progress, AIChatLog, AIInteraction, AIHint, CodeEvaluation, UserSession
 from app.utils import verify_password, generate_token, hash_password
-from config import DATABASE_URL
+from app.config import DATABASE_URL
 
 engine = create_async_engine(DATABASE_URL, echo=False, future=True)
 AsyncSessionLocal: sessionmaker[AsyncSession] = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
