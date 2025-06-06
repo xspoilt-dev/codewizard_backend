@@ -263,7 +263,14 @@ async def save_progress(user_id, lesson_id, completed=False, completion_percenta
         result = await session.execute(select(Progress).where(Progress.user_id == user_id, Progress.lesson_id == lesson_id))
         progress = result.scalar_one_or_none()
         if not progress:
-            progress = Progress(user_id=user_id, lesson_id=lesson_id, completed=completed, completion_percentage=completion_percentage, time_spent=time_spent, last_accessed=datetime.utcnow())
+            progress = Progress(
+                user_id=user_id,
+                lesson_id=lesson_id,
+                completed=completed,
+                completion_percentage=completion_percentage,
+                time_spent=time_spent,
+                last_accessed=datetime.now(timezone.utc),
+            )
             session.add(progress)
         else:
             progress.completed = completed
