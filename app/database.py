@@ -41,13 +41,26 @@ async def login_user(email: str, password: str) -> str:
         if not verify_password(password, user.password):
             return "INVALID_PASSWORD"
         
-        # Generate new token on login
+        # Check if current token is expired
+        if user.token_expires_at and user.token_expires_at < datetime.now(timezone.utc):
+            # Token is expired, generate new one
+            token, expire_at = generate_token()
+            user.token = token
+            user.token_expires_at = expire_at
+            await session.commit()
+            await session.refresh(user)
+            return token
+        
+        # If token exists and is not expired, return existing token
+        if user.token and user.token_expires_at > datetime.now(timezone.utc):
+            return user.token
+            
+        # No valid token exists, generate new one
         token, expire_at = generate_token()
         user.token = token
         user.token_expires_at = expire_at
         await session.commit()
         await session.refresh(user)
-            
         return token
 
 async def get_user(email):
@@ -381,3 +394,22 @@ async def cleanup_expired_sessions():
             await session.delete(session_obj)
         await session.commit()
         return True
+
+async def cleanup_expired_tokens():
+    """Clean up expired tokens from the database"""
+    async with AsyncSessionLocal() as session:
+        # Find users with expired tokens
+        result = await session.execute(
+            select(User).where(
+                User.token_expires_at < datetime.now(timezone.utc)
+            )
+        )
+        users = result.scalars().all()
+        
+        # Clear expired tokens
+        for user in users:
+            user.token = None
+            user.token_expires_at = None
+        
+        await session.commit()
+        return len(users)
