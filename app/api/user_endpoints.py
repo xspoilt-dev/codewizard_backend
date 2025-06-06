@@ -18,6 +18,7 @@ from app.database import (
 )
 from app import utils
 import json
+from datetime import datetime, timezone
 
 def auth_required(f):
     """Decorator to require authentication"""
@@ -35,7 +36,14 @@ def auth_required(f):
         if not user:
             return JSONResponse(
                 status_code=401,
-                data={"error": "Invalid token"}
+                data={"error": "Invalid or expired token"}
+            )
+        
+        # Check if token is expired
+        if user.token_expires_at < datetime.now(timezone.utc):
+            return JSONResponse(
+                status_code=401,
+                data={"error": "Token has expired. Please login again."}
             )
         
         request.user = user
