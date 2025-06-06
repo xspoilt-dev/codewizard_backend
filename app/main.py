@@ -1,8 +1,8 @@
-from catzilla import App, JSONResponse, Response, RouterGroup
+from catzilla import App, JSONResponse, RouterGroup
 import asyncio
 import json
 from functools import wraps
-from database import (
+from app.database import (
     # User operations
     login_user, get_user, register_user, get_user_by_token, get_user_by_id,
     update_user_profile, update_user_password, verify_user,
@@ -20,7 +20,7 @@ from database import (
     # Admin operations
     get_all_users, make_user_admin, get_user_stats, get_lesson_stats
 )
-from utility import Utility
+from . import utils
 
 
 def auth_required(f):
@@ -133,13 +133,13 @@ class WebBackend:
                     data={"error": "Email, password, and name are required"}
                 )
             
-            if not Utility.is_valid_email(email):
+            if not utils.is_valid_email(email):
                 return JSONResponse(
                     status_code=400,
                     data={"error": "Invalid email format"}
                 )
             
-            if not Utility.is_valid_password(password):
+            if not utils.is_valid_password(password):
                 return JSONResponse(
                     status_code=400,
                     data={"error": "Password must be at least 8 characters long"}
@@ -153,13 +153,10 @@ class WebBackend:
                     data={"error": "User already exists"}
                 )
             
-            # Hash password and generate token
-            hashed_password = Utility.gethash_pwd(password)
-            token = Utility.gen_token(email, password)
-            
+        
             # Register user
-            user_id = await register_user(email, hashed_password, name, token)
-            if not user_id:
+            token = await register_user(email, password, name)
+            if not token:
                 return JSONResponse(
                     status_code=500,
                     data={"error": "Failed to register user"}
@@ -192,23 +189,20 @@ class WebBackend:
                     data={"error": "Email and password are required"}
                 )
             
-            if not Utility.is_valid_email(email):
+            if not utils.is_valid_email(email):
                 return JSONResponse(
                     status_code=400,
                     data={"error": "Invalid email format"}
                 )
             
-            # Check if user exists
-            user_exists = await get_user(email)
-            if not user_exists:
+            # Verify credentials
+            token = await login_user(email, password)
+            if token == "EMAIL_NOT_FOUND":
                 return JSONResponse(
                     status_code=404,
                     data={"error": "User not found"}
                 )
-            
-            # Verify credentials
-            token = await login_user(email, password)
-            if not token:
+            elif token == "INVALID_PASSWORD":
                 return JSONResponse(
                     status_code=401,
                     data={"error": "Invalid credentials"}
@@ -263,7 +257,7 @@ class WebBackend:
                     data={"error": "Name or email is required"}
                 )
             
-            if email and not Utility.is_valid_email(email):
+            if email and not utils.is_valid_email(email):
                 return JSONResponse(
                     status_code=400,
                     data={"error": "Invalid email format"}
