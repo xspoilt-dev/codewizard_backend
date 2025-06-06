@@ -11,9 +11,7 @@ def get_file_extension(filename: str) -> str:
 
 def is_valid_filename(filename: str) -> bool:
     """Checks if the filename is valid (not empty and does not contain invalid characters)."""
-    if not filename or any(char in filename for char in r'\/:*?"<>|'):
-        return False
-    return True
+    return bool(filename and all(char not in filename for char in r'\/:*?"<>|'))
 
 def hash_password(password: str) -> str:
     """Returns a hashed version of the password."""
