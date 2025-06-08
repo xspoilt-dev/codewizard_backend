@@ -9,11 +9,20 @@ from sqlalchemy.types import TypeDecorator, DateTime
 from datetime import timezone
 
 class _DateTime(TypeDecorator):
+    """
+    Stores all datetimes in UTC and ensures they're timezone-aware.
+
+    Converts tz-aware datetimes to UTC before storing, and adds UTC tzinfo
+    to tz-naive datetimes. Useful for making SQLite behave like it supports timezones.
+    """
     impl = DateTime
 
     def process_bind_param(self, value, dialect):
-        if value is not None and value.tzinfo is None:
+        if value and value.tzinfo is not None:
+            value = value.astimezone(timezone.utc)
+        elif value:
             value = value.replace(tzinfo=timezone.utc)
+
         return value
 
     def process_result_value(self, value, dialect):
