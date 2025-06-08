@@ -41,8 +41,10 @@ async def login_user(email: str, password: str) -> str:
         if not verify_password(password, user.password):
             return "INVALID_PASSWORD"
         
+        current_time = datetime.now(timezone.utc)
+        
         # Check if current token is expired
-        if user.token_expires_at and user.token_expires_at < datetime.now(timezone.utc):
+        if user.token_expires_at and user.token_expires_at < current_time:
             # Token is expired, generate new one
             token, expire_at = generate_token()
             user.token = token
@@ -52,7 +54,7 @@ async def login_user(email: str, password: str) -> str:
             return token
         
         # If token exists and is not expired, return existing token
-        if user.token and user.token_expires_at > datetime.now(timezone.utc):
+        if user.token and user.token_expires_at > current_time:
             return user.token
             
         # No valid token exists, generate new one
