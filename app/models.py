@@ -1,9 +1,26 @@
 from sqlalchemy import (
     Column, Integer, String, Text, ForeignKey,
-    Boolean, JSON, DateTime, Float
+    Boolean, JSON, Float
 )
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
+
+from sqlalchemy.types import TypeDecorator, DateTime
+from datetime import timezone
+
+class _DateTime(TypeDecorator):
+    impl = DateTime
+
+    def process_bind_param(self, value, dialect):
+        if value is not None and value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None and value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value
+
 
 Base = declarative_base()
 
@@ -15,10 +32,10 @@ class User(Base):
     password = Column(String, nullable=False)
     name = Column(String)
     token = Column(String, unique=True, nullable=True)
-    token_expires_at = Column(DateTime, nullable=True)
+    token_expires_at = Column(_DateTime(), nullable=True)
     is_admin = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(_DateTime(), default=func.now())
 
     # Relationships
     sessions = relationship("UserSession", back_populates="user")
@@ -37,7 +54,7 @@ class Lesson(Base):
     difficulty = Column(String)  # beginner, intermediate, advanced
     content = Column(Text)
     order_index = Column(Integer)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(_DateTime(), default=func.now())
 
     # Relationships
     quizzes = relationship("Quiz", back_populates="lesson")
@@ -54,7 +71,7 @@ class Quiz(Base):
     title = Column(String)
     questions = Column(JSON)  # JSON array of questions
     total_points = Column(Integer, default=100)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(_DateTime(), default=func.now())
 
     lesson = relationship("Lesson", back_populates="quizzes")
     submissions = relationship("QuizSubmission", back_populates="quiz")
@@ -70,7 +87,7 @@ class QuizSubmission(Base):
     score = Column(Float)
     max_score = Column(Float)
     completed = Column(Boolean, default=True)
-    submitted_at = Column(DateTime, default=func.now())
+    submitted_at = Column(_DateTime(), default=func.now())
 
     user = relationship("User", back_populates="quiz_submissions")
     quiz = relationship("Quiz", back_populates="submissions")
@@ -85,8 +102,8 @@ class Progress(Base):
     completed = Column(Boolean, default=False)
     completion_percentage = Column(Float, default=0.0)
     time_spent = Column(Integer, default=0)  # in minutes
-    last_accessed = Column(DateTime, default=func.now())
-    created_at = Column(DateTime, default=func.now())
+    last_accessed = Column(_DateTime(), default=func.now())
+    created_at = Column(_DateTime(), default=func.now())
 
     user = relationship("User", back_populates="progress_entries")
     lesson = relationship("Lesson", back_populates="progress_entries")
@@ -98,7 +115,7 @@ class AIChatLog(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     message = Column(Text)
     response = Column(Text)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(_DateTime(), default=func.now())
 
     user = relationship("User", back_populates="ai_chat_logs")
 
@@ -111,7 +128,7 @@ class AIInteraction(Base):
     input_code = Column(Text)
     output = Column(Text)
     language = Column(String, default="python")
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(_DateTime(), default=func.now())
 
     user = relationship("User", back_populates="ai_interactions")
 
@@ -122,7 +139,7 @@ class AIHint(Base):
     lesson_id = Column(Integer, ForeignKey("lessons.id"))
     hint_text = Column(Text)
     difficulty_level = Column(Integer, default=1)  # 1=easy, 2=medium, 3=hard
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(_DateTime(), default=func.now())
 
     lesson = relationship("Lesson", back_populates="ai_hints")
 
@@ -137,7 +154,7 @@ class CodeEvaluation(Base):
     error = Column(Text, nullable=True)
     execution_time = Column(Float)
     language = Column(String, default="python")
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(_DateTime(), default=func.now())
 
     user = relationship("User", back_populates="code_evaluations")
     lesson = relationship("Lesson", back_populates="code_evaluations")
@@ -148,7 +165,7 @@ class UserSession(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     session_token = Column(String, unique=True)
-    expires_at = Column(DateTime)
-    created_at = Column(DateTime, default=func.now())
+    expires_at = Column(_DateTime())
+    created_at = Column(_DateTime(), default=func.now())
 
     user = relationship("User", back_populates="sessions")
